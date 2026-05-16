@@ -2,7 +2,7 @@
 
 Displays your current Spotify track (album art, song name, artist) on the built-in screen of the **Yunzii B75 Pro Max** keyboard, running entirely in the browser using WebHID. No native app, no drivers, no backend.
 
-**Hosted at:** [theoneandonly-loup.github.io/yunzii-spotify.github.io](https://theoneandonly-loup.github.io/yunzii-spotify.github.io/)
+**Hosted at:** [https://theoneandonly-loup.github.io/yunzii-spotify-display/](https://theoneandonly-loup.github.io/yunzii-spotify-display/)
 
 ---
 
@@ -23,14 +23,14 @@ Displays your current Spotify track (album art, song name, artist) on the built-
 3. Fill in any name and description
 4. Under **Redirect URIs**, add:
    ```
-   https://theoneandonly-loup.github.io/yunzii-spotify.github.io/
+   https://theoneandonly-loup.github.io/yunzii-spotify-display/
    ```
    Then click **Add** and **Save**
 5. Go to **Settings** and copy your **Client ID**
 
 ### 2. Open the app
 
-Go to **[theoneandonly-loup.github.io/yunzii-spotify.github.io] (https://theoneandonly-loup.github.io/yunzii-spotify.github.io)**
+Go to **[https://theoneandonly-loup.github.io/yunzii-spotify-display/] (https://theoneandonly-loup.github.io/yunzii-spotify-display/)**
 
 ### 3. Paste your Client ID
 
