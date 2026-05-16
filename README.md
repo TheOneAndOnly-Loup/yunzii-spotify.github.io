@@ -2,6 +2,8 @@
 
 Displays your current Spotify track (album art, song name, artist) on the built-in screen of the **Yunzii B75 Pro Max** keyboard, running entirely in the browser using WebHID. No native app, no drivers, no backend.
 
+**Hosted at:** [theoneandonly-loup.github.io/yunzii-spotify.github.io](https://theoneandonly-loup.github.io/yunzii-spotify.github.io/)
+
 ---
 
 ## Requirements
@@ -12,29 +14,39 @@ Displays your current Spotify track (album art, song name, artist) on the built-
 
 ---
 
-## Usage
+## Setup
 
-### 1. Get a Spotify Client ID
-
-You need your own Client ID — this is free and takes 2 minutes.
+### 1. Create a Spotify Developer App
 
 1. Go to [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard)
 2. Log in and click **Create app**
 3. Fill in any name and description
-4. Under **Redirect URIs**, add the URL of this page (shown on the page itself in Step 1) then click **Save**
+4. Under **Redirect URIs**, add:
+   ```
+   https://theoneandonly-loup.github.io/yunzii-spotify.github.io/yunzii_spotify.html
+   ```
+   Then click **Add** and **Save**
 5. Go to **Settings** and copy your **Client ID**
 
 ### 2. Open the app
 
-Visit the hosted page, paste your Client ID into the input field in Step 1, then click **Login with Spotify**.
+Go to **[theoneandonly-loup.github.io/yunzii-spotify.github.io/yunzii_spotify.html](https://theoneandonly-loup.github.io/yunzii-spotify.github.io/yunzii_spotify.html)**
 
-### 3. Connect your keyboard
+### 3. Paste your Client ID
 
-After the Spotify login redirects back, click **Connect Keyboard** in Step 2 and select your Yunzii from the browser prompt.
+In Step 1 on the page, paste your Client ID into the input field. It is saved in your browser and never sent anywhere.
 
-That's it — the screen updates automatically.
+### 4. Log in to Spotify
 
-> **Order matters:** log in to Spotify first, then connect the keyboard. The OAuth redirect disconnects any HID device, so doing it the other way around means reconnecting.
+Click **Login with Spotify** and authorise the app. The page will redirect back automatically.
+
+### 5. Connect your keyboard
+
+Plug in your Yunzii B75 Pro Max via USB, then click **Connect Keyboard** in Step 2. Select the keyboard from the browser prompt.
+
+That's it — the screen updates automatically every 2 seconds.
+
+> **Order matters:** always log in to Spotify before connecting the keyboard. The OAuth redirect resets any HID connection.
 
 ---
 
@@ -55,11 +67,11 @@ That's it — the screen updates automatically.
 The keyboard exposes a 160×96 RGB565 framebuffer over WebHID. The protocol (reverse-engineered from the official yunzii-game.com web app) is:
 
 1. **`0x40`** — init packet (signals start of frame transfer)
-2. **`0x41`** — metadata packet  
+2. **`0x41`** — metadata packet
 3. **`0x41` × 549** — pixel data chunks (56 bytes of RGB565 each, with offset + checksum header)
 4. **`0x42`** — commit (display the frame)
 
-The app draws the current track onto a hidden `<canvas>`, converts it to RGB565, and sends the full sequence every 2 seconds. Album art is fetched via the Spotify Web API.
+The app draws the current track onto a hidden `<canvas>`, converts it to RGB565, and sends the full sequence every 2 seconds.
 
 ---
 
@@ -75,7 +87,7 @@ The app draws the current track onto a hidden `<canvas>`, converts it to RGB565,
 
 - Chrome only — WebHID is not available in Firefox or Safari
 - The page must stay open in a window (minimising to a small corner window works fine)
-- The keyboard screen resets to its default after a few seconds without a push — hence the 2s auto-refresh
+- The keyboard screen resets after a few seconds without a push — hence the 2s auto-refresh
 
 ---
 
