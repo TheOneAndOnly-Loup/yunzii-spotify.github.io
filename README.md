@@ -23,14 +23,14 @@ Displays your current Spotify track (album art, song name, artist) on the built-
 3. Fill in any name and description
 4. Under **Redirect URIs**, add:
    ```
-   https://theoneandonly-loup.github.io/yunzii-spotify.github.io/yunzii_spotify.html
+   https://theoneandonly-loup.github.io/yunzii-spotify.github.io/
    ```
    Then click **Add** and **Save**
 5. Go to **Settings** and copy your **Client ID**
 
 ### 2. Open the app
 
-Go to **[theoneandonly-loup.github.io/yunzii-spotify.github.io/yunzii_spotify.html](https://theoneandonly-loup.github.io/yunzii-spotify.github.io/yunzii_spotify.html)**
+Go to **[theoneandonly-loup.github.io/yunzii-spotify.github.io] (https://theoneandonly-loup.github.io/yunzii-spotify.github.io)**
 
 ### 3. Paste your Client ID
 
@@ -86,8 +86,9 @@ The app draws the current track onto a hidden `<canvas>`, converts it to RGB565,
 ## Limitations
 
 - Chrome only — WebHID is not available in Firefox or Safari
-- The page must stay open in a window (minimising to a small corner window works fine)
+- The page must stay open in a window (minimising doesn't work, but you can keep the the window open in the background and use another window to browse the internet)
 - The keyboard screen resets after a few seconds without a push — hence the 2s auto-refresh
+- The keyboard must ALWAYS be connected using a usb cable. 
 
 ---
 
