@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yunzii × Spotify</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --border: #222;
+    --accent: #1db954;
+    --accent2: #ff6b6b;
+    --text: #e8e8e8;
+    --muted: #555;
+    --kbd: #161616;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    gap: 28px;
+  }
+
+  header { text-align: center; }
+  header h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em; }
+  header h1 span { color: var(--accent); }
+  header p { font-size: 0.65rem; color: var(--muted); margin-top: 6px; letter-spacing: 0.1em; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 520px; }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
+
+  .kbd-preview { background: var(--kbd); border: 1px solid #1a1a1a; border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+  .screen-wrap { text-align: center; }
+  .screen-frame { width: 160px; height: 96px; background: #000; border: 2px solid #2a2a2a; border-radius: 4px; overflow: hidden; }
+  .screen-frame canvas { width: 100%; height: 100%; image-rendering: pixelated; }
+  .screen-label { font-size: 0.5rem; color: var(--muted); margin-top: 6px; letter-spacing: 0.1em; }
+
+  .status-row { display: flex; align-items: center; gap: 8px; font-size: 0.62rem; color: var(--muted); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
+  .dot.green { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .step { display: flex; gap: 14px; align-items: flex-start; }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--muted); flex-shrink: 0; margin-top: 1px; transition: all 0.3s; }
+  .step.done .step-num { border-color: var(--accent); color: var(--accent); }
+  .step-content { flex: 1; }
+  .step-content label { display: block; font-size: 0.68rem; color: var(--text); margin-bottom: 8px; }
+
+  .hint { font-size: 0.56rem; color: var(--muted); margin-top: 5px; line-height: 1.7; }
+  .hint a { color: var(--accent); text-decoration: none; }
+  .hint a:hover { text-decoration: underline; }
+  code { font-family: 'Space Mono', monospace; font-size: 0.85em; color: #999; background: #1a1a1a; padding: 1px 5px; border-radius: 3px; }
+
+  .btn { font-family: 'Space Mono', monospace; font-size: 0.62rem; padding: 9px 18px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em; }
+  .btn-primary { background: var(--accent); color: #000; font-weight: 700; }
+  .btn-primary:hover { background: #1ed760; transform: translateY(-1px); }
+  .btn-primary:disabled { background: #1a4a2a; color: #444; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+  .btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+
+  .auth-status { display: flex; align-items: center; gap: 10px; background: var(--bg); border: 1px solid #1a3a22; border-radius: 8px; padding: 10px 14px; font-size: 0.62rem; color: var(--muted); }
+  .auth-user { font-weight: 700; color: var(--text); }
+
+  .btn-spotify { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #000; font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; padding: 10px 20px; border-radius: 20px; border: none; cursor: pointer; transition: all 0.15s; }
+  .btn-spotify:hover { background: #1ed760; transform: translateY(-1px); }
+
+  .now-playing { display: flex; gap: 12px; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; min-height: 64px; }
+  .np-art { width: 44px; height: 44px; border-radius: 4px; background: #1a1a1a; flex-shrink: 0; overflow: hidden; }
+  .np-art img { width: 100%; height: 100%; object-fit: cover; }
+  .np-info { flex: 1; min-width: 0; }
+  .np-track { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .np-sub { font-size: 0.58rem; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .np-empty { font-size: 0.62rem; color: var(--muted); font-style: italic; }
+
+  .progress-bar { width: 100%; height: 2px; background: var(--border); border-radius: 1px; margin-top: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 1px; transition: width 1s linear; width: 0%; }
+
+  .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .toggle-label { font-size: 0.62rem; color: var(--muted); }
+  .toggle { width: 36px; height: 20px; background: var(--border); border-radius: 10px; position: relative; cursor: pointer; transition: background 0.2s; border: none; flex-shrink: 0; }
+  .toggle.on { background: var(--accent); }
+  .toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
+  .toggle.on::after { transform: translateX(16px); }
+
+  .interval-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .interval-btn { font-family: 'Space Mono', monospace; font-size: 0.56rem; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .interval-btn.active { border-color: var(--accent); color: var(--accent); }
+
+  .log { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; font-size: 0.56rem; color: var(--muted); height: 240px; overflow-y: auto; line-height: 1.9; }
+  .log .ok { color: var(--accent); }
+  .log .err { color: var(--accent2); }
+  .log .info { color: #666; }
+
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>YUNZII <span>×</span> SPOTIFY</h1>
+  <p>NOW PLAYING → KEYBOARD SCREEN · B75 PRO MAX</p>
+</header>
+
+<!-- Preview -->
+<div class="card">
+  <div class="card-title">Screen Preview · 160×96px</div>
+  <div class="kbd-preview">
+    <div class="screen-wrap">
+      <div class="screen-frame"><canvas id="previewCanvas" width="160" height="96"></canvas></div>
+      <div class="screen-label">TFT DISPLAY</div>
+    </div>
+  </div>
+  <div class="status-row">
+    <div class="dot" id="kbdDot"></div>
+    <span id="kbdStatus">Keyboard not connected</span>
+  </div>
+</div>
+
+<!-- Step 1: Spotify (do this first — it causes a redirect) -->
+<div class="card">
+  <div class="card-title">Step 1 · Spotify Login</div>
+  <div class="step" id="stepSpotify">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div id="authLoggedOut">
+        <label>Connect Spotify once — stays logged in permanently, auto-refreshes.</label>
+        <div class="btn-row">
+          <button class="btn-spotify" onclick="spotifyLogin()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+            Login with Spotify
+          </button>
+        </div>
+        <div class="hint" style="margin-top:10px;">
+          Serve locally first: <code>cd ~/Downloads && python3 -m http.server 3000 --bind 127.0.0.1</code><br>
+          Then open <a href="http://127.0.0.1:3000/yunzii_spotify.html" target="_blank">http://127.0.0.1:3000/yunzii_spotify.html</a>
+        </div>
+      </div>
+      <div id="authLoggedIn" style="display:none;">
+        <div class="auth-status">
+          <div class="dot green"></div>
+          <span>Connected as <span class="auth-user" id="spotifyUser">—</span></span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" style="font-size:0.55rem;" onclick="spotifyLogout()">Disconnect</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 2: Keyboard (connect AFTER Spotify login since login redirects the page) -->
+<div class="card">
+  <div class="card-title">Step 2 · Connect Keyboard</div>
+  <div class="step" id="stepKbd">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <label>Plug in B75 Pro Max via USB-C, then:</label>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="connectKeyboard()">Connect Keyboard</button>
+      </div>
+      <div class="hint">Connect <em>after</em> Spotify login — the OAuth redirect resets the HID connection.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 3: Controls -->
+<div class="card">
+  <div class="card-title">Step 3 · Now Playing</div>
+  <div class="now-playing" id="nowPlaying">
+    <div class="np-empty">Nothing playing yet</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+  <div class="toggle-row" style="margin-top:14px;">
+    <span class="toggle-label">Auto-update screen</span>
+    <button class="toggle" id="autoToggle" onclick="toggleAuto()"></button>
+  </div>
+  <div class="toggle-row" style="margin-top:10px;">
+    <span class="toggle-label">Layout: <span id="layoutLabel">Clean</span></span>
+    <button class="btn btn-ghost" id="layoutBtn" onclick="cycleLayout()" style="font-size:0.55rem;padding:4px 10px;">Switch</button>
+  </div>
+  <div class="toggle-row" id="fitRow" style="margin-top:8px;display:none;">
+    <span class="toggle-label">Art fit: <span id="fitLabel">Zoom</span></span>
+    <button class="btn btn-ghost" onclick="cycleFit()" style="font-size:0.55rem;padding:4px 10px;">Switch</button>
+  </div>
+  <div class="toggle-row" style="margin-top:8px;">
+    <span class="toggle-label">Rounded art corners</span>
+    <button class="toggle" id="roundedToggle" onclick="toggleRounded()"></button>
+  </div>
+  <div style="margin-top:8px;">
+    <div class="hint" style="margin-bottom:6px;">Update interval:</div>
+    <div class="interval-row">
+      <button class="interval-btn" onclick="setIntervalVal(1000,this)">1s</button>
+      <button class="interval-btn active" onclick="setIntervalVal(2000,this)">2s</button>
+      <button class="interval-btn" onclick="setIntervalVal(5000,this)">5s</button>
+      <button class="interval-btn" onclick="setIntervalVal(10000,this)">10s</button>
+    </div>
+  </div>
+  <div class="btn-row" style="margin-top:14px;">
+    <button class="btn btn-primary" id="pushBtn" onclick="pushNow()" disabled>Push Now</button>
+    <button class="btn btn-ghost" onclick="pushCustom()">Push Custom Image</button>
+  </div>
+</div>
+
+<!-- Log -->
+<div class="card">
+  <div class="card-title">Log</div>
+  <div class="log" id="log"></div>
+  <div class="btn-row" style="margin-top:8px;">
+    <button class="btn btn-ghost" style="font-size:0.55rem;" onclick="clearLog()">Clear</button>
+  </div>
+</div>
+
+<canvas id="renderCanvas" width="160" height="96" style="display:none;"></canvas>
+<input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFile(event)">
+
+<script>
+// ─── Config ───────────────────────────────────────────────────────────────────
+const REDIRECT_URI = window.location.href.split('?')[0].split('#')[0];
+let CLIENT_ID = localStorage.getItem('spotify_client_id') || '';
+const SCOPES       = 'user-read-currently-playing user-read-playback-state';
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let kbdDevice      = null;
+let accessToken    = null;
+let autoUpdate     = false;
+let autoTimer      = null;
+let updateInterval = 2000;
+let currentTrack   = null;
+let layoutMode     = 0; // 0=clean side, 1=cover top, 2=progress
+let coverFitMode   = 1; // 0=stretch, 1=zoom+crop, 2=blur sides
+let roundedArt     = false;
+let pushing        = false; // prevent overlapping pushes
+
+// ─── Log ──────────────────────────────────────────────────────────────────────
+function log(msg, type = 'info') {
+  const el   = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className   = type;
+  line.textContent = `${new Date().toLocaleTimeString()} · ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ─── PKCE ─────────────────────────────────────────────────────────────────────
+function generateVerifier(len = 64) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  const arr   = crypto.getRandomValues(new Uint8Array(len));
+  return Array.from(arr, b => chars[b % chars.length]).join('');
+}
+
+async function generateChallenge(verifier) {
+  const data   = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+// ─── Spotify OAuth ────────────────────────────────────────────────────────────
+async function spotifyLogin() {
+  const verifier  = generateVerifier();
+  const challenge = await generateChallenge(verifier);
+  localStorage.setItem('pkce_verifier', verifier);
+  const p = new URLSearchParams({
+    client_id: CLIENT_ID, response_type: 'code',
+    redirect_uri: REDIRECT_URI, scope: SCOPES,
+    code_challenge_method: 'S256', code_challenge: challenge,
+  });
+  window.location.href = `https://accounts.spotify.com/authorize?${p}`;
+}
+
+async function handleCallback(code) {
+  const verifier = localStorage.getItem('pkce_verifier');
+  if (!verifier) { log('No PKCE verifier found', 'err'); return; }
+  log('Exchanging code for tokens…', 'info');
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code', code,
+      redirect_uri: REDIRECT_URI, client_id: CLIENT_ID, code_verifier: verifier,
+    }),
+  });
+  if (!res.ok) { log(`Token exchange failed: ${await res.text()}`, 'err'); return; }
+  storeTokens(await res.json());
+  window.history.replaceState({}, '', window.location.pathname);
+  localStorage.removeItem('pkce_verifier');
+  await loadUserProfile();
+}
+
+async function refreshAccessToken() {
+  const rt = localStorage.getItem('spotify_refresh_token');
+  if (!rt) { showLoggedOut(); return false; }
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: rt, client_id: CLIENT_ID }),
+  });
+  if (!res.ok) { log('Refresh failed — please re-login', 'err'); showLoggedOut(); return false; }
+  storeTokens(await res.json());
+  log('Token refreshed', 'ok');
+  return true;
+}
+
+function storeTokens(data) {
+  accessToken = data.access_token;
+  const expiry = Date.now() + (data.expires_in - 60) * 1000;
+  localStorage.setItem('spotify_access_token', accessToken);
+  localStorage.setItem('spotify_token_expiry', String(expiry));
+  if (data.refresh_token) localStorage.setItem('spotify_refresh_token', data.refresh_token);
+}
+
+async function getValidToken() {
+  const stored = localStorage.getItem('spotify_access_token');
+  const expiry  = parseInt(localStorage.getItem('spotify_token_expiry') || '0');
+  if (stored && Date.now() < expiry) { accessToken = stored; return accessToken; }
+  const ok = await refreshAccessToken();
+  return ok ? accessToken : null;
+}
+
+async function loadUserProfile() {
+  const token = await getValidToken();
+  if (!token) return;
+  try {
+    const res  = await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    const name = data.display_name || data.id;
+    showLoggedIn(name);
+    document.getElementById('stepSpotify').classList.add('done');
+    log(`Logged in as ${name}`, 'ok');
+    checkReady();
+  } catch(e) { log(`Profile error: ${e.message}`, 'err'); }
+}
+
+function showLoggedIn(name) {
+  document.getElementById('authLoggedOut').style.display = 'none';
+  document.getElementById('authLoggedIn').style.display  = 'block';
+  document.getElementById('spotifyUser').textContent = name;
+  checkReady();
+}
+
+function showLoggedOut() {
+  accessToken = null;
+  document.getElementById('authLoggedOut').style.display = 'block';
+  document.getElementById('authLoggedIn').style.display  = 'none';
+  document.getElementById('stepSpotify').classList.remove('done');
+  document.getElementById('pushBtn').disabled = true;
+}
+
+function spotifyLogout() {
+  ['spotify_access_token','spotify_refresh_token','spotify_token_expiry'].forEach(k => localStorage.removeItem(k));
+  stopAuto(); showLoggedOut();
+  log('Disconnected from Spotify', 'info');
+}
+
+function checkReady() {
+  const ready = !!kbdDevice && !!localStorage.getItem('spotify_access_token');
+  document.getElementById('pushBtn').disabled = !ready;
+}
+
+// ─── Keyboard ─────────────────────────────────────────────────────────────────
+async function connectKeyboard() {
+  try {
+    const devices = await navigator.hid.requestDevice({ filters: [{ vendorId: 0x28e9, productId: 0x31c8 }] });
+    if (!devices.length) { log('No device selected', 'err'); return; }
+
+    // Open ALL interfaces for this device and probe each one.
+    // "Failed to write the report" means we're on the wrong interface —
+    // the screen lives on whichever interface actually accepts sendReport(0, ...).
+    const all        = await navigator.hid.getDevices();
+    const candidates = all.filter(d => d.vendorId === 0x28e9 && d.productId === 0x31c8);
+    log(`Probing ${candidates.length} HID interface(s)…`, 'info');
+
+    // Probe each interface with the real 0x40 init packet.
+    // The one that accepts it IS the screen. Set _initSent=true so
+    // pushImageData skips the 0x40 (already sent here — no double-init).
+    kbdDevice = null;
+    window._initSent = false;
+    for (const dev of candidates) {
+      try {
+        if (!dev.opened) await dev.open();
+        const probe = new Uint8Array(64);
+        probe[0]=0x40; probe[3]=0x08;
+        probe[4]=0xcf; probe[5]=0x02;
+        probe[7]=0xa5; probe[8]=0x5a; probe[9]=0x10; probe[11]=0x01;
+        probe[12]=0xc5; probe[13]=0xb1; probe[14]=0x01;
+        await dev.sendReport(0, probe);
+        kbdDevice = dev;
+        window._initSent = true;
+        log('Keyboard connected', 'ok');
+        break;
+      } catch(e) {
+        
+      }
+    }
+    if (!kbdDevice) { log('Could not find screen interface — try unplugging and reconnecting', 'err'); return; }
+
+    document.getElementById('kbdDot').className      = 'dot green';
+    document.getElementById('kbdStatus').textContent = `Connected · ${kbdDevice.productName}`;
+    document.getElementById('stepKbd').classList.add('done');
+    checkReady();
+
+    if (localStorage.getItem('spotify_access_token')) {
+      log('Spotify ready — pushing now playing…', 'info');
+      try { await pushNow(); } catch(e) { log('First push failed: ' + e.message, 'err'); }
+    } else {
+      drawIdleScreen();
+      try { await pushCanvas(); } catch(e) {}
+    }
+    // Always start auto-refresh after connecting — keyboard clears screen after ~3s without a push
+    if (!autoUpdate) toggleAuto();
+  } catch(e) {
+    log(`Keyboard error: ${e.message}`, 'err');
+  }
+}
+
+// ─── HID Protocol ─────────────────────────────────────────────────────────────
+function rgb888_to_rgb565(r, g, b) {
+  return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+}
+
+function canvasToRGB565(canvas) {
+  const px  = canvas.getContext('2d').getImageData(0, 0, 160, 96).data;
+  const out = new Uint8Array(160 * 96 * 2);
+  for (let i = 0; i < 160 * 96; i++) {
+    const v = rgb888_to_rgb565(px[i*4], px[i*4+1], px[i*4+2]);
+    out[i*2]   = v & 0xFF;
+    out[i*2+1] = (v >> 8) & 0xFF;
+  }
+  return out;
+}
+
+// Timeout wrapper — without this, one hung packet blocks forever
+async function sendPacket(device, data) {
+  const pkt = new Uint8Array(64);
+  pkt.set(data);
+  try {
+    await Promise.race([
+      device.sendReport(0, pkt),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('HID timeout')), 250))
+    ]);
+  } catch(e) {
+    if (!e.message.includes('timeout')) throw e;
+    // Timeouts are non-fatal — keyboard occasionally needs a moment
+  }
+}
+
+
+
+async function pushImageData(rgb565) {
+  if (!kbdDevice) { log('No keyboard connected', 'err'); return; }
+  if (pushing)    { return; } // skip if already mid-push
+  pushing = true;
+  try {
+    const CHUNK = 56;
+
+    // 0x40 init (skip if already sent during interface probing)
+    if (window._initSent) {
+      window._initSent = false;
+    } else {
+      const ip = new Uint8Array(64);
+      ip[0]=0x40; ip[3]=0x08;
+      ip[4]=0xcf; ip[5]=0x02;
+      ip[7]=0xa5; ip[8]=0x5a; ip[9]=0x10; ip[11]=0x01;
+      ip[12]=0xc5; ip[13]=0xb1; ip[14]=0x01;
+      await sendPacket(kbdDevice, ip);
+      await sleep(20);
+    }
+
+    // 0x41 metadata
+    const hp = new Uint8Array(64);
+    hp[0]=0x41; hp[3]=0x07; hp[4]=0x21; hp[5]=0x03;
+    hp[7]=0xa5; hp[8]=0x5a; hp[9]=0x0c; hp[10]=0x78;
+    hp[12]=0xc3; hp[13]=0x93;
+    await sendPacket(kbdDevice, hp);
+    await sleep(10);
+
+    // 0x41 pixel data chunks
+    let offset=0, n=0;
+    while (offset < rgb565.length) {
+      const sz    = Math.min(CHUNK, rgb565.length - offset);
+      const chunk = rgb565.slice(offset, offset + sz);
+      const pkt   = new Uint8Array(64);
+      pkt[0]=0x41;
+      pkt[1]=offset&0xFF; pkt[2]=(offset>>8)&0xFF;
+      pkt[3]=sz&0xFF;
+      pkt[4]=(0x41+pkt[1]+pkt[2]+pkt[3])&0xFF;
+      pkt.set(chunk, 6);
+      await sendPacket(kbdDevice, pkt);
+      offset += sz; n++;
+      if (n % 16 === 0) await sleep(2);
+    }
+
+    // 0x42 commit
+    const ep = new Uint8Array(64);
+    ep[0]=0x42; ep[3]=0x38; ep[4]=(0x42+0x38)&0xFF;
+    await sendPacket(kbdDevice, ep);
+    await sleep(5);
+
+  } finally {
+    pushing = false;
+  }
+}
+
+async function pushCanvas() {
+  const canvas = document.getElementById('renderCanvas');
+  await pushImageData(canvasToRGB565(canvas));
+  document.getElementById('previewCanvas').getContext('2d').drawImage(canvas, 0, 0);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function clearLog() {
+  document.getElementById('log').innerHTML = '';
+}
+
+// ─── Canvas ───────────────────────────────────────────────────────────────────
+function drawIdleScreen() {
+  const canvas = document.getElementById('renderCanvas');
+  const ctx    = canvas.getContext('2d');
+  ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,160,96);
+  ctx.fillStyle = '#1db954'; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('YUNZII × SPOTIFY', 80, 42);
+  ctx.fillStyle = '#333'; ctx.font = '7px monospace';
+  ctx.fillText('waiting for music...', 80, 56);
+  document.getElementById('previewCanvas').getContext('2d').drawImage(canvas, 0, 0);
+}
+
+async function drawTrackScreen(track) {
+  const canvas = document.getElementById('renderCanvas');
+  const ctx    = canvas.getContext('2d');
+
+  ctx.fillStyle = '#080808'; ctx.fillRect(0,0,160,96);
+
+  if (layoutMode === 2) {
+    // ── PROGRESS MODE ─ original layout with progress bar ──────────────────
+    // Album art 58×58
+    if (track.artUrl) {
+      try {
+        const img = await loadImage(track.artUrl);
+        ctx.save();
+        if (roundedArt) clipRounded(ctx, 4, 18, 58, 58, 5);
+        ctx.drawImage(img, 4, 18, 58, 58);
+        ctx.restore();
+        if (!roundedArt) { ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1; ctx.strokeRect(4,18,58,58); }
+      } catch { ctx.fillStyle = '#111'; ctx.fillRect(4,18,58,58); }
+    } else { ctx.fillStyle = '#111'; ctx.fillRect(4,18,58,58); }
+
+    ctx.fillStyle = '#1db954'; ctx.fillRect(68, 0, 2, 96);
+
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(truncate(track.name, 14), 75, 28);
+    ctx.fillStyle = '#888'; ctx.font = '7px sans-serif';
+    ctx.fillText(truncate(track.artist, 17), 75, 40);
+    ctx.fillStyle = '#444'; ctx.font = '6px sans-serif';
+    ctx.fillText(truncate(track.album, 18), 75, 51);
+
+    const pct = track.progress / track.duration;
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(75, 62, 80, 3);
+    ctx.fillStyle = '#1db954'; ctx.fillRect(75, 62, Math.floor(80 * pct), 3);
+
+    ctx.fillStyle = '#444'; ctx.font = '6px monospace';
+    ctx.fillText(msToTime(track.progress), 75, 74);
+    ctx.textAlign = 'right';
+    ctx.fillText(msToTime(track.duration), 155, 74);
+    ctx.textAlign = 'left';
+
+    if (track.isPlaying) {
+      const t = Date.now() / 300;
+      for (let i=0; i<3; i++) {
+        const h = 3 + Math.sin(t + i * 1.2) * 3;
+        ctx.fillStyle = '#1db954';
+        ctx.fillRect(75 + i*5, 84-h, 3, h*2);
+      }
+    } else {
+      ctx.fillStyle = '#333';
+      ctx.fillRect(75, 81, 3, 6);
+      ctx.fillRect(80, 81, 3, 6);
+    }
+
+  } else if (layoutMode === 1) {
+    // ── COVER TOP MODE ─ art fills top, title + artist bottom bar ───────────
+    const ART_H = 68;
+    if (track.artUrl) {
+      try {
+        const img = await loadImage(track.artUrl);
+        const cvFit = coverFitMode; // 0=stretch, 1=zoom+crop, 2=blur sides
+
+        if (cvFit === 0) {
+          // Stretch — fill full width, squish height
+          ctx.save();
+          if (roundedArt) clipRounded(ctx, 0, 0, 160, ART_H, 7);
+          ctx.drawImage(img, 0, 0, 160, ART_H);
+          ctx.restore();
+
+        } else if (cvFit === 1) {
+          // Zoom + crop — maintain aspect ratio, crop sides
+          const scale = ART_H / img.height; // scale to fit height
+          const sw    = img.width * scale;  // rendered width
+          const sx    = (sw - 160) / 2;     // crop offset
+          ctx.save();
+          if (roundedArt) clipRounded(ctx, 0, 0, 160, ART_H, 7);
+          ctx.drawImage(img, sx / scale, 0, img.width - sx / scale * 2, img.height, 0, 0, 160, ART_H);
+          ctx.restore();
+
+        } else {
+          // Blur sides — draw blurred stretched version behind, then crisp square centred on top
+          // Blurred bg
+          ctx.filter = 'blur(6px)';
+          ctx.drawImage(img, -10, -6, 180, ART_H + 12);
+          ctx.filter = 'none';
+          // Dark overlay to tone it down
+          ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, 160, ART_H);
+          // Crisp square art centred
+          const sqSize = ART_H; // square = full height
+          const sqX    = (160 - sqSize) / 2;
+          ctx.save();
+          if (roundedArt) clipRounded(ctx, sqX, 0, sqSize, sqSize, 7);
+          ctx.drawImage(img, sqX, 0, sqSize, sqSize);
+          ctx.restore();
+        }
+
+        // Gradient fade at bottom of art
+        const grad = ctx.createLinearGradient(0, ART_H - 18, 0, ART_H);
+        grad.addColorStop(0, 'rgba(8,8,8,0)');
+        grad.addColorStop(1, 'rgba(8,8,8,0.9)');
+        ctx.fillStyle = grad; ctx.fillRect(0, ART_H - 18, 160, 18);
+      } catch { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, 160, ART_H); }
+    } else { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, 160, ART_H); }
+
+    // Bottom bar
+    ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, ART_H, 160, 96 - ART_H);
+    ctx.fillStyle = '#1db954'; ctx.fillRect(0, ART_H, 160, 1);
+
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(truncate(track.name, 22), 6, ART_H + 13);
+    ctx.fillStyle = '#888'; ctx.font = '7px sans-serif';
+    ctx.fillText(truncate(track.artist, 26), 6, ART_H + 24);
+
+    ctx.fillStyle = track.isPlaying ? '#1db954' : '#444';
+    ctx.beginPath(); ctx.arc(153, ART_H + 10, 3, 0, Math.PI * 2); ctx.fill();
+
+  } else {
+    // ── CLEAN MODE ─ big art left, song + artist right, no progress ─────────
+    // Album art 82×82 — nearly full height, left side
+    const ART = 82;
+    const AX  = 2;
+    const AY  = (96 - ART) / 2; // vertically centred = 7
+    if (track.artUrl) {
+      try {
+        const img = await loadImage(track.artUrl);
+        ctx.save();
+        if (roundedArt) clipRounded(ctx, AX, AY, ART, ART, 6);
+        ctx.drawImage(img, AX, AY, ART, ART);
+        ctx.restore();
+      } catch { ctx.fillStyle = '#111'; ctx.fillRect(AX, AY, ART, ART); }
+    } else { ctx.fillStyle = '#111'; ctx.fillRect(AX, AY, ART, ART); }
+
+    // Thin green accent line between art and text
+    ctx.fillStyle = '#1db954'; ctx.fillRect(AX + ART + 2, 0, 1, 96);
+
+    // Text area starts at x=88
+    const TX = AX + ART + 6;
+    const TW = 160 - TX; // ~70px
+
+    // Song name — bold 10px, wrap to 2 lines if needed
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
+    const words = track.name.split(' ');
+    let line1 = '', line2 = '';
+    for (const w of words) {
+      const test = line1 ? line1 + ' ' + w : w;
+      if (ctx.measureText(test).width <= TW) { line1 = test; }
+      else if (!line2) { line2 = w; }
+      else { line2 += ' ' + w; }
+    }
+    // truncate line2 if needed
+    while (line2 && ctx.measureText(line2 + '…').width > TW) line2 = line2.slice(0,-1);
+    if (line2 && line2 !== track.name.split(' ').slice(-1)[0]) line2 += '…';
+
+    if (line2) {
+      ctx.fillText(line1, TX, 30);
+      ctx.fillText(line2, TX, 43);
+      // Artist below both lines
+      ctx.fillStyle = '#888'; ctx.font = '7px sans-serif';
+      ctx.fillText(truncate(track.artist, 11), TX, 58);
+    } else {
+      ctx.fillText(line1, TX, 38);
+      // Artist below
+      ctx.fillStyle = '#888'; ctx.font = '7px sans-serif';
+      ctx.fillText(truncate(track.artist, 11), TX, 52);
+    }
+
+    // Playing indicator dot
+    ctx.fillStyle = track.isPlaying ? '#1db954' : '#333';
+    ctx.beginPath();
+    ctx.arc(TX + 3, 76, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  document.getElementById('previewCanvas').getContext('2d').drawImage(canvas, 0, 0);
+}
+
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload  = () => resolve(img);
+    img.onerror = reject;
+    img.src = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&w=60&h=60`;
+    setTimeout(() => reject(new Error('img timeout')), 5000);
+  });
+}
+
+function truncate(str, max) {
+  if (!str) return '';
+  return str.length > max ? str.slice(0, max-1) + '…' : str;
+}
+
+function msToTime(ms) {
+  const s = Math.floor(ms/1000);
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+
+// ─── Spotify API ──────────────────────────────────────────────────────────────
+async function fetchCurrentTrack() {
+  const token = await getValidToken();
+  if (!token) { log('Not logged in', 'err'); return null; }
+  try {
+    const res = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.status === 204) return null;
+    if (res.status === 401) {
+      const ok = await refreshAccessToken();
+      return ok ? fetchCurrentTrack() : null;
+    }
+    if (!res.ok) { log(`Spotify error ${res.status}`, 'err'); return null; }
+    const data = await res.json();
+    if (!data || !data.item) return null;
+    return {
+      name:      data.item.name,
+      artist:    data.item.artists.map(a => a.name).join(', '),
+      album:     data.item.album.name,
+      artUrl:    data.item.album.images?.slice(-1)[0]?.url,
+      progress:  data.progress_ms,
+      duration:  data.item.duration_ms,
+      isPlaying: data.is_playing,
+      id:        data.item.id,
+    };
+  } catch(e) { log(`Fetch error: ${e.message}`, 'err'); return null; }
+}
+
+function updateNowPlayingUI(track) {
+  const el = document.getElementById('nowPlaying');
+  if (!track) {
+    el.innerHTML = '<div class="np-empty">Nothing playing</div>';
+    document.getElementById('progressFill').style.width = '0%';
+    return;
+  }
+  el.innerHTML = `
+    <div class="np-art">${track.artUrl ? `<img src="https://images.weserv.nl/?url=${encodeURIComponent(track.artUrl)}&w=88&h=88"/>` : ''}</div>
+    <div class="np-info">
+      <div class="np-track">${track.name}</div>
+      <div class="np-sub">${track.artist}</div>
+      <div class="np-sub" style="color:#333;">${track.album}</div>
+    </div>`;
+  document.getElementById('progressFill').style.width = (track.progress/track.duration*100).toFixed(1)+'%';
+}
+
+// ─── Controls ─────────────────────────────────────────────────────────────────
+async function pushNow() {
+  const track = await fetchCurrentTrack();
+  updateNowPlayingUI(track);
+  if (track) { currentTrack = track; await drawTrackScreen(track); }
+  else drawIdleScreen();
+  if (kbdDevice) await pushCanvas();
+  else log('Preview only (no keyboard)', 'info');
+}
+
+function pushCustom() { document.getElementById('fileInput').click(); }
+
+async function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = await new Promise((res,rej) => {
+    const i = new Image(); i.onload = ()=>res(i); i.onerror = rej;
+    i.src = URL.createObjectURL(file);
+  });
+  const canvas = document.getElementById('renderCanvas');
+  canvas.getContext('2d').drawImage(img, 0, 0, 160, 96);
+  document.getElementById('previewCanvas').getContext('2d').drawImage(canvas, 0, 0);
+  if (kbdDevice) { log(`Pushing ${file.name}`, 'info'); await pushCanvas(); }
+  else log('Preview only', 'info');
+  e.target.value = '';
+}
+
+function toggleAuto() {
+  autoUpdate = !autoUpdate;
+  document.getElementById('autoToggle').className = 'toggle' + (autoUpdate ? ' on' : '');
+  if (autoUpdate) { log(`Auto ON (${updateInterval/1000}s)`, 'ok'); runAuto(); }
+  else { stopAuto(); log('Auto OFF', 'info'); }
+}
+
+function cycleLayout() {
+  layoutMode = (layoutMode + 1) % 3;
+  const labels = ['Clean', 'Cover top', 'Progress'];
+  document.getElementById('layoutLabel').textContent = labels[layoutMode];
+  document.getElementById('fitRow').style.display = layoutMode === 1 ? 'flex' : 'none';
+  log('Layout: ' + labels[layoutMode], 'info');
+  if (currentTrack) { drawTrackScreen(currentTrack).then(() => { if (kbdDevice) pushCanvas(); }); }
+  else drawIdleScreen();
+}
+
+function cycleFit() {
+  coverFitMode = (coverFitMode + 1) % 3;
+  const labels = ['Stretch', 'Zoom', 'Blur sides'];
+  document.getElementById('fitLabel').textContent = labels[coverFitMode];
+  log('Art fit: ' + labels[coverFitMode], 'info');
+  if (currentTrack) { drawTrackScreen(currentTrack).then(() => { if (kbdDevice) pushCanvas(); }); }
+}
+
+function toggleRounded() {
+  roundedArt = !roundedArt;
+  document.getElementById('roundedToggle').className = 'toggle' + (roundedArt ? ' on' : '');
+  log('Rounded corners ' + (roundedArt ? 'ON' : 'OFF'), 'info');
+  if (currentTrack) { drawTrackScreen(currentTrack).then(() => { if (kbdDevice) pushCanvas(); }); }
+  else drawIdleScreen();
+}
+
+// Helper: clip a rounded rect region before drawing into it
+function clipRounded(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.clip();
+}
+
+async function runAuto() {
+  if (!autoUpdate) return;
+  await pushNow();
+  autoTimer = setTimeout(runAuto, updateInterval);
+}
+
+function stopAuto() {
+  autoUpdate = false;
+  document.getElementById('autoToggle').className = 'toggle';
+  if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+}
+
+function setIntervalVal(ms, btn) {
+  updateInterval = ms;
+  document.querySelectorAll('.interval-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (autoUpdate) { stopAuto(); autoUpdate=true; document.getElementById('autoToggle').className='toggle on'; runAuto(); }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function saveClientId(val) {
+  CLIENT_ID = val.trim();
+  if (CLIENT_ID) localStorage.setItem('spotify_client_id', CLIENT_ID);
+}
+
+async function init() {
+  // Show the current redirect URI so user can copy it into Spotify dashboard
+  const el = document.getElementById('redirectHint');
+  if (el) el.textContent = REDIRECT_URI;
+  // Pre-fill saved client ID
+  const saved = localStorage.getItem('spotify_client_id');
+  if (saved) {
+    CLIENT_ID = saved;
+    const inp = document.getElementById('clientIdInput');
+    if (inp) inp.value = saved;
+  }
+  drawIdleScreen();
+  log('Ready.', 'info');
+
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get('code');
+  const error  = params.get('error');
+
+  if (error) {
+    log(`Auth denied: ${error}`, 'err');
+    window.history.replaceState({}, '', window.location.pathname);
+    return;
+  }
+
+  if (code) {
+    await handleCallback(code);
+    return;
+  }
+
+  // Restore existing session from localStorage
+  const rt     = localStorage.getItem('spotify_refresh_token');
+  const stored = localStorage.getItem('spotify_access_token');
+  const expiry  = parseInt(localStorage.getItem('spotify_token_expiry') || '0');
+
+  if (rt) {
+    if (stored && Date.now() < expiry) {
+      accessToken = stored;
+      await loadUserProfile();
+    } else {
+      log('Restoring session…', 'info');
+      const ok = await refreshAccessToken();
+      if (ok) await loadUserProfile();
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>

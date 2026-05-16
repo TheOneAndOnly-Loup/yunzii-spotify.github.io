@@ -2,8 +2,6 @@
 
 Displays your current Spotify track (album art, song name, artist) on the built-in screen of the **Yunzii B75 Pro Max** keyboard, running entirely in the browser using WebHID. No native app, no drivers, no backend.
 
-![layout preview](https://i.imgur.com/placeholder.png)
-
 ---
 
 ## Requirements
@@ -14,45 +12,29 @@ Displays your current Spotify track (album art, song name, artist) on the built-
 
 ---
 
-## Setup
+## Usage
 
-### 1. Create a Spotify Developer App
+### 1. Get a Spotify Client ID
+
+You need your own Client ID — this is free and takes 2 minutes.
 
 1. Go to [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard)
 2. Log in and click **Create app**
 3. Fill in any name and description
-4. Set **Redirect URI** to: `http://127.0.0.1:3000/yunzii_spotify.html`
-   - Click **Add** then **Save**
+4. Under **Redirect URIs**, add the URL of this page (shown on the page itself in Step 1) then click **Save**
 5. Go to **Settings** and copy your **Client ID**
 
-### 2. Add your Client ID to the file
+### 2. Open the app
 
-Open `yunzii_spotify.html` in a text editor, find this line near the top of the `<script>` section:
+Visit the hosted page, paste your Client ID into the input field in Step 1, then click **Login with Spotify**.
 
-```js
-const CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
-```
+### 3. Connect your keyboard
 
-Replace `YOUR_SPOTIFY_CLIENT_ID` with the Client ID you copied.
+After the Spotify login redirects back, click **Connect Keyboard** in Step 2 and select your Yunzii from the browser prompt.
 
-### 3. Serve the file locally
+That's it — the screen updates automatically.
 
-WebHID and Spotify OAuth both require a proper origin (not a `file://` URL). The easiest way is Python's built-in server:
-
-```bash
-cd /path/to/folder
-python3 -m http.server 3000 --bind 127.0.0.1
-```
-
-Then open **[http://127.0.0.1:3000/yunzii_spotify.html](http://127.0.0.1:3000/yunzii_spotify.html)** in Chrome.
-
-### 4. Use it
-
-1. **Step 1 — Spotify:** Click **Login with Spotify** and authorise the app. The page will redirect back automatically.
-2. **Step 2 — Keyboard:** Plug in your Yunzii B75 Pro Max via USB, then click **Connect Keyboard**. Select the keyboard from the browser prompt.
-3. Done — the screen updates automatically every 2 seconds.
-
-> **Order matters:** log in to Spotify first, then connect the keyboard. The OAuth redirect will disconnect any HID device, so doing it the other way around means you'd have to reconnect the keyboard.
+> **Order matters:** log in to Spotify first, then connect the keyboard. The OAuth redirect disconnects any HID device, so doing it the other way around means reconnecting.
 
 ---
 
@@ -62,8 +44,8 @@ Then open **[http://127.0.0.1:3000/yunzii_spotify.html](http://127.0.0.1:3000/yu
 |---|---|
 | **Auto-update** | Toggle the refresh loop on/off |
 | **Refresh interval** | 1s / 2s / 5s / 10s |
-| **Layout** | Cycle between *Clean* (big art left), *Cover top* (art fills top), *Progress* (with progress bar and timestamps) |
-| **Art fit** *(Cover top only)* | *Zoom* (crop sides to fill), *Blur sides* (blurred background with crisp centre), *Stretch* |
+| **Layout** | *Clean* (big art left) · *Cover top* (art fills top) · *Progress* (progress bar + timestamps) |
+| **Art fit** *(Cover top only)* | *Zoom* (crop to fill) · *Blur sides* (blurred bg + crisp centre) · *Stretch* |
 | **Rounded art corners** | Applies to all layouts |
 
 ---
@@ -72,28 +54,28 @@ Then open **[http://127.0.0.1:3000/yunzii_spotify.html](http://127.0.0.1:3000/yu
 
 The keyboard exposes a 160×96 RGB565 framebuffer over WebHID. The protocol (reverse-engineered from the official yunzii-game.com web app) is:
 
-1. **`0x40`** — init packet (tells the keyboard a frame transfer is starting)
-2. **`0x41`** — metadata packet
+1. **`0x40`** — init packet (signals start of frame transfer)
+2. **`0x41`** — metadata packet  
 3. **`0x41` × 549** — pixel data chunks (56 bytes of RGB565 each, with offset + checksum header)
 4. **`0x42`** — commit (display the frame)
 
-The app draws the current track onto a hidden `<canvas>`, converts it to RGB565, and sends the full sequence every 2 seconds. Album art is fetched via the Spotify Web API with CORS support.
+The app draws the current track onto a hidden `<canvas>`, converts it to RGB565, and sends the full sequence every 2 seconds. Album art is fetched via the Spotify Web API.
 
 ---
 
 ## Privacy
 
-- No data leaves your machine except to Spotify's API
-- Spotify tokens are stored in `localStorage` (so you stay logged in across sessions) and never sent anywhere else
+- Your Client ID is stored only in your browser's `localStorage` — it never leaves your machine
+- Spotify tokens are also stored in `localStorage` and only used to call Spotify's API
 - No analytics, no tracking, no server
 
 ---
 
 ## Limitations
 
-- Requires Chrome — WebHID is not available in Firefox or Safari
-- The page must stay open and visible in a window (minimising to a small window in the corner works fine)
-- The keyboard's screen reverts to its default display a few seconds after the last push, which is why the 2s auto-refresh is needed
+- Chrome only — WebHID is not available in Firefox or Safari
+- The page must stay open in a window (minimising to a small corner window works fine)
+- The keyboard screen resets to its default after a few seconds without a push — hence the 2s auto-refresh
 
 ---
 
