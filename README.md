@@ -30,7 +30,7 @@ Displays your current Spotify track (album art, song name, artist) on the built-
 
 ### 2. Open the app
 
-Go to **[https://theoneandonly-loup.github.io/yunzii-spotify-display/] (https://theoneandonly-loup.github.io/yunzii-spotify-display/)**
+Go to **https://theoneandonly-loup.github.io/yunzii-spotify-display/**
 
 ### 3. Paste your Client ID
 
