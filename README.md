@@ -28,7 +28,7 @@ Displays your current Spotify track (album art, song name, artist) on the built-
    Then click **Add** and **Save**
 5. Go to **Settings** and copy your **Client ID**
 
-### 2. Open the app
+### 2. Open the tool
 
 Using Chrome, go to **https://theoneandonly-loup.github.io/yunzii-spotify-display/**
 
